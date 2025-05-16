@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<html>
+<head>
+    <title>"爱心生成器"</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            cursor: pointer;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // 设置canvas全屏
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // 爱心对象池
+    const hearts = [];
+
+    // 爱心类
+    class Heart {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.size = Math.random() * 15 + 5;
+            this.speedY = -Math.random() * 5 - 2;
+            this.speedX = Math.random() * 4 - 2;
+            this.angle = 0;
+            this.alpha = 1;
+            this.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
+        }
+
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            this.angle += 0.1;
+            this.alpha -= 0.01;
+            return this.alpha > 0;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+
+            // 绘制爱心形状
+            ctx.beginPath();
+            ctx.fillStyle = this.color;
+            const size = this.size;
+            ctx.moveTo(0, 0);
+            for (let t = 0; t <= Math.PI * 2; t += 0.01) {
+                const x = size * 16 * Math.pow(Math.sin(t), 3);
+                const y = -size * (13 * Math.cos(t) - 5 * Math.cos(2*t)
+                    - 2 * Math.cos(3*t) - Math.cos(4*t));
+                ctx.lineTo(x, y);
+            }
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    // 动画循环
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 更新并绘制所有爱心
+        for (let i = hearts.length - 1; i >= 0; i--) {
+            if (!hearts[i].update()) {
+                hearts.splice(i, 1);
+            } else {
+                hearts[i].draw();
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    // 交互事件
+    function createHeart(e) {
+        const x = e.clientX || e.touches?.[0]?.clientX;
+        const y = e.clientY || e.touches?.[0]?.clientY;
+
+        // 一次生成3-5个爱心
+        for (let i = 0; i < Math.random() * 2 + 3; i++) {
+            hearts.push(new Heart(x, y));
+        }
+    }
+
+    // 事件监听
+    canvas.addEventListener('click', createHeart);
+    canvas.addEventListener('touchmove', createHeart);
+</script>
+</body>
+</html>
